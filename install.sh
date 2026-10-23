@@ -5,7 +5,7 @@
 set -e
 
 echo ""
-echo "# web-midicontroller – setup"
+echo "# Turn Me On – setup"
 echo ""
 
 echo " - npm install ..."
