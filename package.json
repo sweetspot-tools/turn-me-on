@@ -38,6 +38,7 @@
         "@types/node": "^18.15.11",
         "@types/validator": "^13.7.15",
         "@vitejs/plugin-vue": "^6.0.7",
+        "@vitest/coverage-v8": "^4.1.8",
         "@vue/eslint-config-prettier": "^7.1.0",
         "@vue/eslint-config-typescript": "^14.6.0",
         "@vue/test-utils": "^2.3.2",
@@ -57,12 +58,11 @@
         "prettier": "^2.8.7",
         "sass": "^1.61.0",
         "standard-version": "^9.5.0",
-        "tailwindcss": "^4.3.3",
+        "tailwindcss": "^3.4.19",
         "typescript": "^5.0.4",
         "vite": "^8.3.5",
         "vitest": "^4.1.11",
-        "vue-tsc": "^1.2.0",
-        "@vitest/coverage-v8": "^4.1.8"
+        "vue-tsc": "^1.2.0"
     },
     "config": {
         "commitizen": {
