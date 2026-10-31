@@ -31,7 +31,8 @@ const currentValue = ref<number>(props.controller.value || ((props.controller.mi
 const steps = (props.controller.maxValue as number) - (props.controller.minValue as number);
 const maxDeg = props.beginDeg + props.lengthDeg;
 const degPerStep = props.lengthDeg / steps;
-const rotate = computed(() => currentValue.value * degPerStep - props.beginDeg - 135);
+// pointer artwork points up at 0deg: the range is centered around it
+const rotate = computed(() => (currentValue.value - (props.controller.minValue as number)) * degPerStep - props.lengthDeg / 2);
 const rotateStyle = computed(() => `${rotate.value}deg`);
 
 let startY = 0;
@@ -71,9 +72,8 @@ function onMouseMove(e: MouseEvent) {
     if (degrees !== movement) {
         isChanging = true;
         movement = degrees;
-        currentValue.value = Math.round(degrees / degPerStep);
+        currentValue.value = (props.controller.minValue as number) + Math.round((degrees - props.beginDeg) / degPerStep);
     }
-    degPerStep;
 }
 
 function onMouseUp() {
@@ -107,16 +107,14 @@ function onTouchStart(event: TouchEvent) {
 }
 
 function calculateMoveDeg(mouseY: number): number {
-    let diff = (startY + mouseY * direction) % 360;
-    if (diff > maxDeg /*|| (startY - mouseY) / 360 > 1*/) {
+    let diff = startY + mouseY * direction;
+    if (diff > maxDeg) {
         diff = maxDeg;
     } else if (diff < props.beginDeg) {
         diff = props.beginDeg;
     }
 
-    const steps = Math.round(diff / degPerStep);
-
-    return steps * degPerStep;
+    return props.beginDeg + Math.round((diff - props.beginDeg) / degPerStep) * degPerStep;
 }
 
 onMounted(() => {
