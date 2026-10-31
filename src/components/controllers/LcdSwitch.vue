@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ILcdControllerConfigs } from "@/services/types/devices";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import PlusIcon from "../icons/PlusIcon.vue";
 import MinusIcon from "../icons/MinusIcon.vue";
 import ControllerLabel from "./ControllerLabel.vue";
@@ -13,6 +13,9 @@ const props = defineProps<{
     controller: ILcdControllerConfigs;
     invert: boolean;
 }>();
+/** One digit per figure of the maximum value (at most 3), so a 0-64 preset doesn't show a spare "8". */
+const digits = computed(() => Math.min(3, Math.max(1, String(props.controller.maxValue || 127).length)));
+const digitsWidth = computed(() => `${digits.value * 16}px`);
 const currentValue = ref<string>(formatOutput(props.controller.value || props.controller.minValue || 1));
 const delay = 1000;
 const longWait = 1500;
@@ -90,23 +93,29 @@ function changeValue(value: number, emitChange = true) {
 
 <template>
     <div class="flex flex-col items-center">
-        <div class="flex items-center flex-row justify-center border-3d px-1 w-20 relative" :class="invert ? 'invert bg-white' : 'bg-black'">
-            <div
-                class="absolute w-12 font-digital text-2xl select-none cursor-default pointer-events-none bg-black/0 text-off/40 text-center"
-                :class="{ invert: invert }"
-            >
-                888
+        <div
+            class="flex items-center flex-row justify-center border-3d px-1 relative"
+            :class="invert ? 'invert bg-white' : 'bg-black'"
+            :style="{ width: `calc(${digitsWidth} + 32px)` }"
+        >
+            <div class="relative m-1" :style="{ width: digitsWidth }">
+                <div
+                    class="absolute inset-0 font-digital text-2xl select-none cursor-default pointer-events-none bg-black/0 text-off/40 text-right"
+                    :class="{ invert: invert }"
+                >
+                    {{ "8".repeat(digits) }}
+                </div>
+                <input
+                    type="text"
+                    :min="controller.minValue || undefined"
+                    :max="controller.maxValue || undefined"
+                    v-model="currentValue"
+                    readonly
+                    :maxlength="digits"
+                    class="relative w-full font-digital text-2xl select-none cursor-default pointer-events-none bg-black/0 text-on z-10 text-right"
+                    :class="invert ? 'invert bg-black/0' : ''"
+                />
             </div>
-            <input
-                type="text"
-                :min="controller.minValue || undefined"
-                :max="controller.maxValue || undefined"
-                v-model="currentValue"
-                readonly
-                maxlength="3"
-                class="w-12 font-digital text-2xl m-1 select-none cursor-default pointer-events-none bg-black/0 text-on z-10 text-right"
-                :class="invert ? 'invert bg-black/0' : ''"
-            />
             <div class="flex flex-col items-center justify-between text-xs mt-0.5" :class="{ invert: !invert }">
                 <button
                     type="button"
