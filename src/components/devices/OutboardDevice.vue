@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import DeviceContainer from "./DeviceContainer.vue";
-import type { IMessageControllerConfigs, ILcdControllerConfigs, LedStatus } from "@/services/types/devices";
+import type { IMessageControllerConfigs, ILcdControllerConfigs, LedStatus, ChannelRange } from "@/services/types/devices";
 import { useColors } from "@/composables/useColors";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useDevice } from "@/composables/useDevice";
 // import UploadIcon from "../icons/UploadIcon.vue";
 // import DownloadIcon from "../icons/DownloadIcon.vue";
@@ -33,7 +33,11 @@ const outPanel = useColors(currentDevice.backgroundColor);
 const overPanel = useColors(!currentDevice.panelColor.isTransparent() ? currentDevice.panelColor : currentDevice.backgroundColor);
 const lightStatus = ref<LedStatus>("off");
 const midiChannels = Array.from(Array(16).keys(), (n) => n + 1);
-const selectedInterface = ref<number>(0);
+/** Output chosen for this device, falling back to the first active one. */
+const selectedOutput = computed<IOutputPort | undefined>(() => {
+    const active = props.midi?.activeOutputs ?? [];
+    return active.find((o) => o.id === currentDevice.outputInterface?.id) ?? active[0];
+});
 const patchSelector = ref<ILcdControllerConfigs | undefined>(currentDevice.controllers.lcds.find((lcd) => lcd.message === "programchange"));
 
 const lastNote = ref<number | undefined>();
@@ -43,9 +47,12 @@ let blinkTimeout: NodeJS.Timeout | null = null;
 let displayTimeout: NodeJS.Timeout | null = null;
 const blinkDuration = 300;
 
-function changeInteface(output: IOutputPort | undefined) {
-    // deviceStore.changeDeviceInterface(currentDevice, output);
-    currentDevice.outputInterface = output;
+function changeInteface(id: string) {
+    currentDevice.outputInterface = props.midi?.activeOutputs.find((o) => o.id === id);
+}
+
+function changeChannel(channel: string) {
+    currentDevice.channel = Number(channel) as ChannelRange;
 }
 
 function handleBlink(sent: boolean) {
@@ -67,14 +74,14 @@ function dispatchToggle(controller: IMessageControllerConfigs, active: boolean) 
     handleDisplay(active ? "on" : "off", controller.note);
     const newValue = active ? controller.maxValue || 127 : controller.minValue || 0;
     
-    const sent = !!props.midi?.send(
-        props.midi.outputs[selectedInterface.value],
+    const sent = !!(selectedOutput.value && props.midi?.send(
+        selectedOutput.value,
         currentDevice.channel,
         controller.message,
         controller.note,
         newValue,
         currentDevice
-    );
+    ));
 
     if (sent && controller.group) {
         console.log("ORIGINAL", controller.label, controller.group, newValue);
@@ -92,21 +99,21 @@ function dispatchToggle(controller: IMessageControllerConfigs, active: boolean) 
 
 function dispatchPCMessage(controller: ILcdControllerConfigs, value: number) {
     if (value >= (controller.minValue || 0) && value <= (controller.maxValue || 127)) {
-        const sent = !!props.midi?.send(props.midi.outputs[selectedInterface.value], currentDevice.channel, controller.message, value, value, currentDevice);
+        const sent = !!(selectedOutput.value && props.midi?.send(selectedOutput.value, currentDevice.channel, controller.message, value, value, currentDevice));
         handleBlink(sent);
     }
 }
 function dispatchCCMessage(controller: IMessageControllerConfigs, value: number) {
     if (value >= (controller.minValue || 0) && value <= (controller.maxValue || 127)) {
         handleDisplay(value + "", controller.note);
-        const sent = !!props.midi?.send(
-            props.midi.outputs[selectedInterface.value],
+        const sent = !!(selectedOutput.value && props.midi?.send(
+            selectedOutput.value,
             currentDevice.channel,
             controller.message,
             controller.note,
             value,
             currentDevice
-        );
+        ));
         handleBlink(sent);
     }
 }
@@ -144,21 +151,27 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                         <DownloadIcon />
                     </button>
                 </template> -->
-                <select class="btn border-3d text-xs uppercase h-6" :class="{ invert: outPanel.isFgInverted }" title="Set Midi input/output Interface">
-                    <option :value="undefined" @change="changeInteface(undefined)" :selected="device.outputInterface === undefined"></option>
-                    <option
-                        v-for="(output, idx) in midi?.activeOutputs ?? []"
-                        :key="idx"
-                        :value="idx"
-                        @change="changeInteface(output)"
-                        :selected="device.outputInterface === output"
-                    >
+                <select
+                    class="btn border-3d text-xs uppercase h-6"
+                    :class="{ invert: outPanel.isFgInverted }"
+                    title="Set Midi input/output Interface"
+                    :value="selectedOutput?.id ?? ''"
+                    @change="(e) => changeInteface((e.target as HTMLSelectElement).value)"
+                >
+                    <option v-if="!selectedOutput" value="" disabled>No output</option>
+                    <option v-for="output in midi?.activeOutputs ?? []" :key="output.id" :value="output.id" :selected="selectedOutput?.id === output.id">
                         {{ (output.manufacturer ? output.manufacturer + " - " : "") + output.name }}
                     </option>
                 </select>
-                <select class="btn border-3d text-xs uppercase h-6" :class="{ invert: outPanel.isFgInverted }" title="Set Midi channel">
-                    <option v-for="channel in midiChannels" :key="channel" :value="channel">
-                        {{ "Channel " + ("0" + channel).substr(-2) }}
+                <select
+                    class="btn border-3d text-xs uppercase h-6"
+                    :class="{ invert: outPanel.isFgInverted }"
+                    title="Set Midi channel"
+                    :value="currentDevice.channel"
+                    @change="(e) => changeChannel((e.target as HTMLSelectElement).value)"
+                >
+                    <option v-for="channel in midiChannels" :key="channel" :value="channel" :selected="currentDevice.channel === channel">
+                        {{ "Ch " + ("0" + channel).substr(-2) }}
                     </option>
                 </select>
             </div>

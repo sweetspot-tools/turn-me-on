@@ -213,7 +213,6 @@ export default class Outboard implements IDeviceConfig {
 
     /** the device's MIDI channel  */
     set channel(channel: ChannelRange) {
-        this.checkStock();
         this._channel = channel;
     }
 
@@ -223,7 +222,6 @@ export default class Outboard implements IDeviceConfig {
 
     /** the device's MIDI/output interface (WebMidi Output or HttpOutput) */
     set outputInterface(output: IOutputPort | undefined) {
-        this.checkStock();
         this._output = output;
     }
 
