@@ -50,7 +50,7 @@ function formatNoteOutput(value: number | "") {
                     readonly
                     maxlength="3"
                     class="font-digital w-12 text-2xl select-none cursor-default pointer-events-none bg-black/0 text-on z-20 text-right"
-                    :class="[invert ? 'invert bg-black/0' : '', minimal ? 'pr-2' : 'm-1']"
+                    :class="[invert ? 'invert bg-black/0' : '', minimal ? 'pr-2' : 'mt-1 pr-[7.5px]']"
                 />
             </div>
             <div class="absolute top-0 right-0" v-if="!minimal">
