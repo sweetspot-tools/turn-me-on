@@ -141,10 +141,9 @@ onMounted(() => {
 
         <!-- content row: flex-1 gives it a defined height so dndrop-container can fill it -->
         <div class="flex-1 min-h-0 overflow-y-hidden">
-            <div class="table rack-table-content w-full h-full">
-                <div class="table-row">
-                    <div class="hidden md:table-cell cell lc"></div>
-                    <div class="table-cell cell cc">
+            <div class="rack-table-content flex w-full h-full">
+                <div class="hidden md:block cell lc"></div>
+                <div class="cell cc flex-1 min-w-0">
                         <div class="h-full min-h-0 flex flex-col">
                             <OutboardsContainer class="flex-1 min-h-0" :showConsole="showConsole">
                                 <Container
@@ -154,13 +153,13 @@ onMounted(() => {
                                     :fire-related-events-only="true"
                                     drag-handle-selector=".column-drag-handle"
                                     drag-class="dndrop-dragging-ghost"
+                                    :drop-placeholder="{ className: 'rack-drop-placeholder', animationDuration: 150, showOnTop: false }"
                                     group-name="devices"
                                     data-index="rack"
                                     orientation="vertical"
                                     @drop="(drop: DropResult) => onDrop(drop)"
                                     @drag-start="onDragStartFromRack"
                                     @drag-end="onDragEndFromRack"
-                                    v-if="rackStore.midi !== undefined || rackStore.http !== undefined"
                                 >
                                     <Draggable v-for="device in rackStore.rackDevices" :key="(device as Outboard).key">
                                         <OutboardDevice
@@ -170,7 +169,7 @@ onMounted(() => {
                                             :collapsed="collapseAll"
                                             :selected="selectedDevice !== undefined && selectedDevice.id === device.id"
                                             :device="(device as Outboard)"
-                                            :midi="(rackStore.midi as Midi)"
+                                            :midi="(rackStore.midi as Midi | undefined)"
                                             :is-selected="selectedDevice !== undefined && selectedDevice.id === device.id"
                                             @openeditor="() => $emit('openeditor', device as Outboard)"
                                             @removedevice="() => moveBackToStore(device as Outboard)"
@@ -189,8 +188,7 @@ onMounted(() => {
                             </OutboardsContainer>
                         </div>
                     </div>
-                    <div class="hidden md:table-cell cell rc"></div>
-                </div>
+                <div class="hidden md:block cell rc"></div>
             </div>
         </div>
 
@@ -216,13 +214,16 @@ onMounted(() => {
 }
 
 .rack-table-content {
-    .cell:first-child,
-    .cell:last-child {
+    .cell.lc,
+    .cell.rc {
+        flex: none;
+        width: 53px;
         background-repeat: repeat-y;
     }
 }
 
-:deep(.table-row) {
+:deep(.table-row),
+.rack-table-content {
     .cell {
         &:first-child,
         &:last-child {

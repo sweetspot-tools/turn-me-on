@@ -24,7 +24,7 @@ const props = defineProps<{
     device: Outboard;
     isSelected: boolean;
     draggable?: boolean;
-    midi: IComunicator;
+    midi?: IComunicator;
 }>();
 
 const { lcds, rotaries, toggles, currentDevice } = useDevice(props.device);
@@ -67,7 +67,7 @@ function dispatchToggle(controller: IMessageControllerConfigs, active: boolean) 
     handleDisplay(active ? "on" : "off", controller.note);
     const newValue = active ? controller.maxValue || 127 : controller.minValue || 0;
     
-    const sent = props.midi.send(
+    const sent = !!props.midi?.send(
         props.midi.outputs[selectedInterface.value],
         currentDevice.channel,
         controller.message,
@@ -92,14 +92,14 @@ function dispatchToggle(controller: IMessageControllerConfigs, active: boolean) 
 
 function dispatchPCMessage(controller: ILcdControllerConfigs, value: number) {
     if (value >= (controller.minValue || 0) && value <= (controller.maxValue || 127)) {
-        const sent = props.midi.send(props.midi.outputs[selectedInterface.value], currentDevice.channel, controller.message, value, value, currentDevice);
+        const sent = !!props.midi?.send(props.midi.outputs[selectedInterface.value], currentDevice.channel, controller.message, value, value, currentDevice);
         handleBlink(sent);
     }
 }
 function dispatchCCMessage(controller: IMessageControllerConfigs, value: number) {
     if (value >= (controller.minValue || 0) && value <= (controller.maxValue || 127)) {
         handleDisplay(value + "", controller.note);
-        const sent = props.midi.send(
+        const sent = !!props.midi?.send(
             props.midi.outputs[selectedInterface.value],
             currentDevice.channel,
             controller.message,
@@ -147,7 +147,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                 <select class="btn border-3d text-xs uppercase h-6" :class="{ invert: outPanel.isFgInverted }" title="Set Midi input/output Interface">
                     <option :value="undefined" @change="changeInteface(undefined)" :selected="device.outputInterface === undefined"></option>
                     <option
-                        v-for="(output, idx) in midi.activeOutputs"
+                        v-for="(output, idx) in midi?.activeOutputs ?? []"
                         :key="idx"
                         :value="idx"
                         @change="changeInteface(output)"

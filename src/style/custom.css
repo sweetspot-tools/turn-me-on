@@ -88,3 +88,22 @@ body {
 body.is-dragging .sidebar-overlay {
     pointer-events: none;
 }
+/* Drop target preview shown in the rack while dragging a device */
+.rack-drop-placeholder {
+    box-sizing: border-box;
+    border: 2px dashed rgb(255 255 255 / 0.55);
+    border-radius: 0.25rem;
+    background: rgb(255 255 255 / 0.06);
+    /* the rack is pulled up under the header by 6px: keep the top border inside the visible area */
+    margin-top: 6px;
+    height: calc(100% - 6px);
+}
+
+/* Rack devices keep their natural height; the zone scrolls when they don't fit */
+.rack-drop-zone {
+    overflow-y: auto;
+
+    > .dndrop-draggable-wrapper {
+        flex: none;
+    }
+}
